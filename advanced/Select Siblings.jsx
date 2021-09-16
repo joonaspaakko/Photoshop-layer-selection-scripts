@@ -1,5 +1,12 @@
 // Select Siblings.jsx
-// v.1.0.
+// v.1.1
+
+// CHANGELOG:
+// v.1.1 
+//  - Fixed an issue with multi-group scopes where it ended selecting the wrong layers when choosing not to include the active layers.
+//  - I also did some cleanup...
+// v.1.0 
+//  - First version
 
 // • Selects sibling layers.
 // • You can choose to include the active layers in the selection.
@@ -11,57 +18,51 @@
 var doc = app.activeDocument;
 var parent = app.activeDocument.activeLayer.parent;
 var siblings = parent.layers;
+var activeLayerPrompt = confirm("Include active layer(s) in the selection?");
 var selectedLayers = getSelectedLayers();
 
 if ( selectedLayers.id.length > 0 ) {
   
-  var activeLayerPrompt = confirm("Decision time:\nInclude active layer(s) in the selection?");
   var parents = [];
   
   // Get parents
-  for ( var sl = 0; sl < selectedLayers.obj.length; sl++ ) {
-    
-    var layer = selectedLayers.obj[ sl ];
+  each( selectedLayers.obj, function( layer ) {
     var parent = layer.parent;
     if ( !parentExists(parents, parent) ) parents.push( parent );
-    
-  }
+  });
   
   // Pay each parent a visit
   var ids = [];
-  for ( var p = 0; p < parents.length; p++ ) {
+  each( parents, function( parent ) {
     
-    var parent = parents[ p ];
-    var siblings = parent.layers;
+    var siblings = parent.layers; // Also includes the active layer...
     
-    for ( var i=0; i < siblings.length; i++ ) {
-      
-      var layer = siblings[i];
+    each( siblings, function( layer ) {
       
       var push = true;
       var id = layer.id;
+      var dontSelectActiveLayer = !activeLayerPrompt;
       
-      if ( !activeLayerPrompt && selectedLayers.id.length !== siblings.length ) {
-        if ( siblingInActiveLayers( id, selectedLayers.id ) ) {
-          push = false;
-        }
-      }
+      if ( dontSelectActiveLayer ) {
+        var isActiveLayer = siblingInActiveLayers( id, selectedLayers.id );
+        if ( isActiveLayer ) push = false;
+      } 
       
-      if ( push ) {
-        ids.push( id );
-      }
+      if ( push ) ids.push( id );
       
-    }
-  }
+    });
+    
+  });
   
   buildSelectionWithIDs( ids );
+  
 }
 
 // FUNCTION WASTELAND
 // ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
 function parentExists( parents, parent ) {
-  var inArray = false;
+  var inArray = false;  
   for ( var i = 0; i < parents.length; i++ ) {
     if ( parents[i] == parent ) {
       inArray = true;
@@ -133,4 +134,20 @@ function selectLayerWidthID( id, action ) {
   }
   desc.putBoolean(charIDToTypeID('MkVs'), false);
   executeAction(charIDToTypeID('slct'), desc, DialogModes.NO);
+}
+
+function each( array, reverse, callback ) {
+  if ( typeof reverse === 'function' ) { callback = reverse; reverse = false; }
+	var result;
+  var isArray = array && typeof array === 'object' && array[0];
+	if ( isArray && callback ) {
+
+    if ( reverse ) array = array.slice().reverse();
+		for ( var i=0; i < array.length; i++ ) {
+			if ( callback( array[i], i  ) !== undefined ) break;
+		}
+    result = array;
+    
+	} else { result = 'invalid input' }
+	return result;
 }

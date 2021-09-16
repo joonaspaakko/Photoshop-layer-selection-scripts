@@ -6,4 +6,8 @@ These scripts are pretty much just a way to use existing layer selection functio
 
 ## advanced (folder)
 
-All of these scripts also work with multiple group layers. For example if you select two separate groups and run `Select Children.jsx`, it selects the child layers inside both groups.
+Aside from the obvious, the "advanced" scripts also consider each group a separate scope. For example if you select two separate groups and run `Select Children.jsx`, it selects the child layers inside both groups.
+
+**Multi-group scope example:**
+
+![](advanced-multi-group-scope-example.gif)
